@@ -1,0 +1,26 @@
+services:
+  amper:
+    build: .
+    container_name: amper-market-watch
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "4840:4840"
+    environment:
+      POLL_SECONDS: "60"
+      OPC_ENDPOINT: "opc.tcp://0.0.0.0:4840/amper/"
+      DATABASE_PATH: "/data/amper.sqlite3"
+    volumes:
+      - amper-data:/data
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: amper-public-tunnel
+    profiles: ["public"]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://amper:8000
+    depends_on:
+      - amper
+
+volumes:
+  amper-data:
